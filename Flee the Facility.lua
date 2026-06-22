@@ -1,4 +1,4 @@
--- [[ FLEE THE FACILITY ULTIMATE HUB v9.5 - PART 1 ]]
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.7 - PART 1 ]]
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -41,10 +41,10 @@ local origLighting = {
 local connections = {}
 local espObjects = {}
 local toggleButtons = {}
-local isLocalCrouching = false -- Pelacak status jongkok murni pemain
+local isLocalCrouching = false
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "FTF_Premium_Menu_V9_5"
+ScreenGui.Name = "FTF_Premium_Menu_V9_7"
 ScreenGui.Parent = CoreGui or LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 
@@ -87,7 +87,7 @@ table.insert(connections, dragConn2)
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(0, 300, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "FTF HUB - PREMIUM v9.5 (FINAL FIXED)"
+Title.Text = "FTF HUB - PREMIUM v9.7 (RE-FIXED)"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
@@ -184,7 +184,7 @@ Content.Position = UDim2.new(0, 10, 0, 40)
 Content.BackgroundTransparency = 1
 Content.Parent = MainFrame
 
--- [[ FLEE THE FACILITY ULTIMATE HUB v9.5 - PART 2 ]]
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.7 - PART 2 ]]
 local function createSlider(name, min, max, default, pos, callback)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(0, 210, 0, 15)
@@ -275,13 +275,13 @@ ResetSpeedBtn.TextSize = 13
 ResetSpeedBtn.Parent = Content
 round(ResetSpeedBtn)
 
-local function createToggle(keyName, name, default, pos, callback)
-	local state = default
+-- KODE TOGGLE DENGAN SINGKRONISASI AMAN KE VARIABEL CURRENT KEMBALI AKTIF
+local function createToggle(keyName, name, default, pos)
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(0, 20, 0, 20)
 	btn.Position = pos
-	btn.BackgroundColor3 = state and Color3.fromRGB(0, 180, 80) or Color3.fromRGB(80, 80, 80)
-	btn.Text = state and "✓" or ""
+	btn.BackgroundColor3 = current[keyName] and Color3.fromRGB(0, 180, 80) or Color3.fromRGB(80, 80, 80)
+	btn.Text = current[keyName] and "✓" or ""
 	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 	btn.Font = Enum.Font.SourceSansBold
 	btn.TextSize = 14
@@ -300,26 +300,25 @@ local function createToggle(keyName, name, default, pos, callback)
 	lbl.Parent = Content
 
 	local function updateVisual(newState)
-		state = newState
-		btn.BackgroundColor3 = state and Color3.fromRGB(0, 180, 80) or Color3.fromRGB(80, 80, 80)
-		btn.Text = state and "✓" or ""
-		callback(state)
+		current[keyName] = newState -- MENYAMBUNGKAN CEKLIS KE BACKEND ENGINE UTAMA
+		btn.BackgroundColor3 = current[keyName] and Color3.fromRGB(0, 180, 80) or Color3.fromRGB(80, 80, 80)
+		btn.Text = current[keyName] and "✓" or ""
 	end
 
 	btn.MouseButton1Click:Connect(function()
-		updateVisual(not state)
+		updateVisual(not current[keyName])
 	end)
 
 	toggleButtons[keyName] = updateVisual
 	return btn
 end
 
-createToggle("SilentHack", "Silent Hack", current.SilentHack, UDim2.new(0, 240, 0, 5), function(v) current.SilentHack = v end)
-createToggle("PlayerEsp", "Player ESP", current.PlayerEsp, UDim2.new(0, 240, 0, 30), function(v) current.PlayerEsp = v end)
-createToggle("BeastEsp", "Beast ESP", current.BeastEsp, UDim2.new(0, 240, 0, 55), function(v) current.BeastEsp = v end)
-createToggle("ComputerEsp", "Computer ESP", current.ComputerEsp, UDim2.new(0, 240, 0, 80), function(v) current.ComputerEsp = v end)
-createToggle("RemoveFog", "Hapus Kabut & Debu Map", current.RemoveFog, UDim2.new(0, 240, 0, 105), function(v) current.RemoveFog = v end)
-createToggle("FullBright", "Full Brightness Map", current.FullBright, UDim2.new(0, 240, 0, 130), function(v) current.FullBright = v end)
+createToggle("SilentHack", "Silent Hack", current.SilentHack, UDim2.new(0, 240, 0, 5))
+createToggle("PlayerEsp", "Player ESP", current.PlayerEsp, UDim2.new(0, 240, 0, 30))
+createToggle("BeastEsp", "Beast ESP", current.BeastEsp, UDim2.new(0, 240, 0, 55))
+createToggle("ComputerEsp", "Computer ESP", current.ComputerEsp, UDim2.new(0, 240, 0, 80))
+createToggle("RemoveFog", "Hapus Kabut & Debu Map", current.RemoveFog, UDim2.new(0, 240, 0, 105))
+createToggle("FullBright", "Full Brightness Map", current.FullBright, UDim2.new(0, 240, 0, 130))
 
 local TeleportTitle = Instance.new("TextLabel")
 TeleportTitle.Size = UDim2.new(0, 210, 0, 20)
@@ -357,7 +356,7 @@ but.Font = Enum.Font.SourceSansBold
 but.TextSize = 14
 round(but)
 
--- [[ FLEE THE FACILITY ULTIMATE HUB v9.5 - PART 3 ]]
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.7 - PART 3 ]]
 but.MouseButton1Click:Connect(function()
 	local inputText = inp.Text:lower()
 	if inputText == "" then return end
@@ -444,7 +443,7 @@ ResetBtn.MouseButton1Click:Connect(function()
 	restoreLighting()
 end)
 
--- Deteksi input jongkok secara murni dari keyboard/tombol layar (C / LeftCtrl)
+-- SISTEM ENGINE EMULASI JONGKOK BARU (MELACAK INPUT KEYBOARD PEMAIN SECARA NYATA)
 local inputConn1 = UserInputService.InputBegan:Connect(function(input, processed)
 	if processed then return end
 	if input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl then
@@ -467,7 +466,8 @@ local function applyESP(object, color, isPlayer, pName)
 		end
 		return 
 	end
-	-- Memindahkan penempatan Highlight agar tidak diblokir Executor terbaru (Dimasukkan ke PlayerGui)
+	
+	-- Memindahkan penempatan Highlight ke dalam PlayerGui (Sistem Terbuka) agar lolos pemblokiran Executor
 	local box = Instance.new("Highlight")
 	box.Name = "FTF_ESP"; box.FillColor = color; box.FillTransparency = 0.5
 	box.OutlineColor = Color3.fromRGB(255, 255, 255); box.Adornee = object
@@ -481,7 +481,7 @@ local function removeESP(object)
 end
 
 local coreConn = RunService.Heartbeat:Connect(function()
-	-- 1. BACKEND SEPARATE SPEED ENGINE (TERPISAH KARENA PAKAI INPUT TRACKER)
+	-- 1. UTILITY KECEPATAN (SPEED HACK BERDIRI / JONGKOK)
 	local char = LocalPlayer.Character
 	if char and char:FindFirstChild("Humanoid") then
 		local hum = char.Humanoid
@@ -494,7 +494,7 @@ local coreConn = RunService.Heartbeat:Connect(function()
 		end
 	end
 
-	-- 2. BACKEND ENGINE BRIGHTNESS MAP
+	-- 2. UTILITY ENGINE MAP LIGHTING (FULL BRIGHTNESS)
 	if current.FullBright then
 		Lighting.Ambient = Color3.fromRGB(255, 255, 255)
 		Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
@@ -507,7 +507,7 @@ local coreConn = RunService.Heartbeat:Connect(function()
 		Lighting.ClockTime = origLighting.ClockTime
 	end
 
-	-- 3. BACKEND ENGINE NO FOG / NO DUST
+	-- 3. UTILITY ENGINE HAPUS KABUT DAN KEBUT ATMOSFER MAP
 	if current.RemoveFog then
 		Lighting.FogEnd = 999999
 		Lighting.FogStart = 999999
@@ -522,7 +522,7 @@ local coreConn = RunService.Heartbeat:Connect(function()
 		end
 	end
 
-	-- 4. BACKEND ENGINE DETEKSI REFRESH ESP UTAMA
+	-- 4. UTILITY UTAMA REFRESH INDIKATOR ESP WALLHACK
 	for _, p in pairs(Players:GetPlayers()) do
 		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
 			local isBeast = p.Character:FindFirstChild("BeastHammer") or p.Character:FindFirstChild("Hammer") or (p:FindFirstChild("Attributes") and p.Attributes:GetAttribute("IsBeast"))
@@ -562,4 +562,3 @@ table.insert(connections, coreConn)
 table.insert(connections, Players.PlayerRemoving:Connect(function(p)
 	if p.Character then removeESP(p.Character) end
 end))
-
