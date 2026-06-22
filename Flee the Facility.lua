@@ -1,4 +1,4 @@
--- [[ FLEE THE FACILITY ULTIMATE HUB v9.7 - PART 1 ]]
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.8 - PART 1 ]]
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -44,7 +44,7 @@ local toggleButtons = {}
 local isLocalCrouching = false
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "FTF_Premium_Menu_V9_7"
+ScreenGui.Name = "FTF_Premium_Menu_V9_8"
 ScreenGui.Parent = CoreGui or LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 
@@ -87,7 +87,7 @@ table.insert(connections, dragConn2)
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(0, 300, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "FTF HUB - PREMIUM v9.7 (RE-FIXED)"
+Title.Text = "FTF HUB - PREMIUM v9.8 (SILENT FIXED)"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
@@ -184,7 +184,7 @@ Content.Position = UDim2.new(0, 10, 0, 40)
 Content.BackgroundTransparency = 1
 Content.Parent = MainFrame
 
--- [[ FLEE THE FACILITY ULTIMATE HUB v9.7 - PART 2 ]]
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.8 - PART 2 ]]
 local function createSlider(name, min, max, default, pos, callback)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(0, 210, 0, 15)
@@ -275,7 +275,6 @@ ResetSpeedBtn.TextSize = 13
 ResetSpeedBtn.Parent = Content
 round(ResetSpeedBtn)
 
--- KODE TOGGLE DENGAN SINGKRONISASI AMAN KE VARIABEL CURRENT KEMBALI AKTIF
 local function createToggle(keyName, name, default, pos)
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(0, 20, 0, 20)
@@ -300,7 +299,7 @@ local function createToggle(keyName, name, default, pos)
 	lbl.Parent = Content
 
 	local function updateVisual(newState)
-		current[keyName] = newState -- MENYAMBUNGKAN CEKLIS KE BACKEND ENGINE UTAMA
+		current[keyName] = newState
 		btn.BackgroundColor3 = current[keyName] and Color3.fromRGB(0, 180, 80) or Color3.fromRGB(80, 80, 80)
 		btn.Text = current[keyName] and "✓" or ""
 	end
@@ -356,7 +355,7 @@ but.Font = Enum.Font.SourceSansBold
 but.TextSize = 14
 round(but)
 
--- [[ FLEE THE FACILITY ULTIMATE HUB v9.7 - PART 3 ]]
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.8 - PART 3 ]]
 but.MouseButton1Click:Connect(function()
 	local inputText = inp.Text:lower()
 	if inputText == "" then return end
@@ -443,7 +442,7 @@ ResetBtn.MouseButton1Click:Connect(function()
 	restoreLighting()
 end)
 
--- SISTEM ENGINE EMULASI JONGKOK BARU (MELACAK INPUT KEYBOARD PEMAIN SECARA NYATA)
+-- Melacak status kontrol tombol merangkak / jongkok dari keyboard pemain
 local inputConn1 = UserInputService.InputBegan:Connect(function(input, processed)
 	if processed then return end
 	if input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl then
@@ -467,7 +466,6 @@ local function applyESP(object, color, isPlayer, pName)
 		return 
 	end
 	
-	-- Memindahkan penempatan Highlight ke dalam PlayerGui (Sistem Terbuka) agar lolos pemblokiran Executor
 	local box = Instance.new("Highlight")
 	box.Name = "FTF_ESP"; box.FillColor = color; box.FillTransparency = 0.5
 	box.OutlineColor = Color3.fromRGB(255, 255, 255); box.Adornee = object
@@ -481,7 +479,7 @@ local function removeESP(object)
 end
 
 local coreConn = RunService.Heartbeat:Connect(function()
-	-- 1. UTILITY KECEPATAN (SPEED HACK BERDIRI / JONGKOK)
+	-- 1. SEPARATE SPEED ENGINE
 	local char = LocalPlayer.Character
 	if char and char:FindFirstChild("Humanoid") then
 		local hum = char.Humanoid
@@ -494,7 +492,7 @@ local coreConn = RunService.Heartbeat:Connect(function()
 		end
 	end
 
-	-- 2. UTILITY ENGINE MAP LIGHTING (FULL BRIGHTNESS)
+	-- 2. ENGINE MAP BRIGHTNESS
 	if current.FullBright then
 		Lighting.Ambient = Color3.fromRGB(255, 255, 255)
 		Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
@@ -507,7 +505,7 @@ local coreConn = RunService.Heartbeat:Connect(function()
 		Lighting.ClockTime = origLighting.ClockTime
 	end
 
-	-- 3. UTILITY ENGINE HAPUS KABUT DAN KEBUT ATMOSFER MAP
+	-- 3. ENGINE NO FOG / NO DUST
 	if current.RemoveFog then
 		Lighting.FogEnd = 999999
 		Lighting.FogStart = 999999
@@ -522,7 +520,7 @@ local coreConn = RunService.Heartbeat:Connect(function()
 		end
 	end
 
-	-- 4. UTILITY UTAMA REFRESH INDIKATOR ESP WALLHACK
+	-- 4. REFRESH ESP ENGINE
 	for _, p in pairs(Players:GetPlayers()) do
 		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
 			local isBeast = p.Character:FindFirstChild("BeastHammer") or p.Character:FindFirstChild("Hammer") or (p:FindFirstChild("Attributes") and p.Attributes:GetAttribute("IsBeast"))
@@ -548,12 +546,25 @@ local coreConn = RunService.Heartbeat:Connect(function()
 		end
 	end
 
+	-- 5. RE-FIXED SILENT HACK ENGINE (METODE MUTING INSTAN)
 	if current.SilentHack then
+		-- Membisukan suara gagal di folder SoundService
 		for _, sound in pairs(SoundService:GetDescendants()) do
-			if sound:IsA("Sound") and (sound.Name:lower():find("error") or sound.Name:lower():find("fail") or sound.Name:lower():find("explode")) then sound.Volume = 0 end
+			if sound:IsA("Sound") then
+				local sName = sound.Name:lower()
+				if sName:find("error") or sName:find("fail") or sName:find("explode") or sName:find("break") or sName:find("glass") then
+					sound.Volume = 0
+				end
+			end
 		end
+		-- Membisukan suara meledak langsung pada aset Meja Komputer di map permainan
 		for _, sound in pairs(workspace:GetDescendants()) do
-			if sound:IsA("Sound") and (sound.Name:lower():find("error") or sound.Name:lower():find("fail") or sound.Name:lower():find("explode")) then sound.Volume = 0 end
+			if sound:IsA("Sound") then
+				local sName = sound.Name:lower()
+				if sName:find("error") or sName:find("fail") or sName:find("explode") or sName:find("break") or sName:find("glass") then
+					sound.Volume = 0
+				end
+			end
 		end
 	end
 end)
