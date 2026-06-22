@@ -1,9 +1,10 @@
--- [[ FLEE THE FACILITY EXPLOIT HUB v8.0 - PART 1 ]]
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.0 - PART 1 ]]
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+local SoundService = game:GetService("SoundService")
 
 local defaults = {
 	StandSpeed = 16,
@@ -24,18 +25,20 @@ local current = {
 }
 
 local connections = {}
+local espObjects = {}
+
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "FTF_Premium_Menu_V8"
+ScreenGui.Name = "FTF_Premium_Menu_V9"
 ScreenGui.Parent = CoreGui or LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 480, 0, 260)
-MainFrame.Position = UDim2.new(0.5, -240, 0.1, 0)
+MainFrame.Size = UDim2.new(0, 540, 0, 260)
+MainFrame.Position = UDim2.new(0.5, -270, 0.3, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
-MainFrame.Draggable = false
+MainFrame.Draggable = false -- Terkunci static tidak bisa digeser
 MainFrame.Parent = ScreenGui
 
 local TopBar = Instance.new("Frame")
@@ -46,7 +49,7 @@ TopBar.Parent = MainFrame
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(0.6, 0, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "FTF HUB - PREMIUM v8.0"
+Title.Text = "FTF HUB - PREMIUM v9.0"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
@@ -75,17 +78,18 @@ MiniBtn.TextSize = 14
 MiniBtn.Parent = TopBar
 
 local OpenBtn = Instance.new("TextButton")
-OpenBtn.Size = UDim2.new(0, 90, 0, 30)
-OpenBtn.Position = UDim2.new(0, 15, 0, 15) 
+OpenBtn.Size = UDim2.new(0, 100, 0, 35)
+OpenBtn.Position = UDim2.new(0, 15, 0, 15) -- Pojok kiri atas
 OpenBtn.BackgroundColor3 = Color3.fromRGB(40, 180, 100)
 OpenBtn.Text = "OPEN MENU"
 OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 OpenBtn.Font = Enum.Font.SourceSansBold
 OpenBtn.TextSize = 12
 OpenBtn.Visible = false
+OpenBtn.Active = true
+OpenBtn.Draggable = false -- Terkunci static
 OpenBtn.Parent = ScreenGui
 
--- [[ FLEE THE FACILITY EXPLOIT HUB v8.0 - PART 2 ]]
 local ConfirmFrame = Instance.new("Frame")
 ConfirmFrame.Size = UDim2.new(0, 260, 0, 120)
 ConfirmFrame.Position = UDim2.new(0.5, -130, 0.5, -60)
@@ -142,6 +146,7 @@ Content.Position = UDim2.new(0, 10, 0, 40)
 Content.BackgroundTransparency = 1
 Content.Parent = MainFrame
 
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.0 - PART 2 ]]
 local function createSlider(name, min, max, default, pos, callback)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(0, 210, 0, 15)
@@ -191,20 +196,22 @@ local function createSlider(name, min, max, default, pos, callback)
 			update(input) 
 		end
 	end)
-	game:GetService("UserInputService").InputChanged:Connect(function(input)
+	local moveConn = UserInputService.InputChanged:Connect(function(input)
 		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then 
 			update(input) 
 		end
 	end)
-	game:GetService("UserInputService").InputEnded:Connect(function(input)
+	local endConn = UserInputService.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then 
 			dragging = false 
 		end
 	end)
+	table.insert(connections, moveConn)
+	table.insert(connections, endConn)
+	
 	return {Label = label, Fill = fill, Min = min, Max = max}
 end
 
--- [[ FLEE THE FACILITY EXPLOIT HUB v8.0 - PART 3 ]]
 local standSlider = createSlider("Speed Berdiri", 16, 45, current.StandSpeed, UDim2.new(0, 0, 0, 5), function(v) current.StandSpeed = v end)
 local crouchSlider = createSlider("Speed Jongkok", 8, 30, current.CrouchSpeed, UDim2.new(0, 0, 0, 45), function(v) current.CrouchSpeed = v end)
 
@@ -252,10 +259,67 @@ local function createToggle(name, default, pos, callback)
 	return btn
 end
 
-local silentTgl = createToggle("Silent Hack (No Fail)", current.SilentHack, UDim2.new(0, 240, 0, 5), function(v) current.SilentHack = v end)
-local pEspTgl = createToggle("Player ESP", current.PlayerEsp, UDim2.new(0, 240, 0, 35), function(v) current.PlayerEsp = v end)
-local bEspTgl = createToggle("Beast ESP", current.BeastEsp, UDim2.new(0, 240, 0, 65), function(v) current.BeastEsp = v end)
-local cEspTgl = createToggle("Computer ESP", current.ComputerEsp, UDim2.new(0, 240, 0, 95), function(v) current.ComputerEsp = v end)
+createToggle("Silent Hack", current.SilentHack, UDim2.new(0, 240, 0, 5), function(v) current.SilentHack = v end)
+createToggle("Player ESP", current.PlayerEsp, UDim2.new(0, 240, 0, 35), function(v) current.PlayerEsp = v end)
+createToggle("Beast ESP", current.BeastEsp, UDim2.new(0, 240, 0, 65), function(v) current.BeastEsp = v end)
+createToggle("Computer ESP", current.ComputerEsp, UDim2.new(0, 240, 0, 95), function(v) current.ComputerEsp = v end)
+
+local TeleportTitle = Instance.new("TextLabel")
+TeleportTitle.Size = UDim2.new(0, 210, 0, 20)
+TeleportTitle.Position = UDim2.new(0, 0, 0, 140)
+TeleportTitle.Text = "TELEPORT MENU"
+TeleportTitle.TextColor3 = Color3.fromRGB(0, 180, 255)
+TeleportTitle.BackgroundTransparency = 1
+TeleportTitle.TextXAlignment = Enum.TextXAlignment.Left
+TeleportTitle.Font = Enum.Font.SourceSansBold
+TeleportTitle.TextSize = 14
+TeleportTitle.Parent = Content
+
+local inp = Instance.new("TextBox")
+inp.Name = "inp"
+inp.Parent = Content
+inp.BackgroundColor3 = Color3.fromRGB(18, 46, 68)
+inp.Position = UDim2.new(0, 0, 0, 165)
+inp.Size = UDim2.new(0, 210, 0, 30)
+inp.PlaceholderText = "Masukkan Nama Player / Beast..."
+inp.Text = ""
+inp.TextColor3 = Color3.fromRGB(255, 255, 255)
+inp.Font = Enum.Font.SourceSans
+inp.TextSize = 12
+round(inp)
+
+local but = Instance.new("TextButton")
+but.Name = "but"
+but.Parent = Content
+but.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+but.Position = UDim2.new(0, 220, 0, 165)
+but.Size = UDim2.new(0, 100, 0, 30)
+but.Text = "Teleport"
+but.TextColor3 = Color3.fromRGB(255, 255, 255)
+but.Font = Enum.Font.SourceSansBold
+but.TextSize = 14
+round(but)
+
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.0 - PART 3 ]]
+but.MouseButton1Click:Connect(function()
+	local inputText = inp.Text:lower()
+	if inputText == "" then return end
+	local targetPlayer = nil
+	for _, player in pairs(Players:GetPlayers()) do
+		local uname = player.Name:lower()
+		local dname = player.DisplayName:lower()
+		if uname:find(inputText) or dname:find(inputText) then
+			targetPlayer = player
+			break
+		end
+	end
+	if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		local myChar = LocalPlayer.Character
+		if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+			myChar.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(3, 0, 0)
+		end
+	end
+end)
 
 MiniBtn.MouseButton1Click:Connect(function()
 	MainFrame.Visible = false
@@ -276,14 +340,101 @@ NoBtn.MouseButton1Click:Connect(function()
 end)
 
 SubmitBtn.MouseButton1Click:Connect(function()
+	for _, conn in pairs(connections) do
+		if conn then conn:Disconnect() end
+	end
+	for _, esp in pairs(espObjects) do
+		if esp then esp:Destroy() end
+	end
 	ScreenGui:Destroy()
 end)
 
 ResetBtn.MouseButton1Click:Connect(function()
-	current.StandSpeed = defaults.StandSpeed
-	current.CrouchSpeed = defaults.CrouchSpeed
+	for k, v in pairs(defaults) do current[k] = v end
 	standSlider.Fill.Size = UDim2.new((defaults.StandSpeed - standSlider.Min) / (standSlider.Max - standSlider.Min), 0, 1, 0)
 	standSlider.Label.Text = "Speed Berdiri: " .. defaults.StandSpeed
 	crouchSlider.Fill.Size = UDim2.new((defaults.CrouchSpeed - crouchSlider.Min) / (crouchSlider.Max - crouchSlider.Min), 0, 1, 0)
 	crouchSlider.Label.Text = "Speed Jongkok: " .. defaults.CrouchSpeed
+	inp.Text = ""
 end)
+
+local function applyESP(object, color)
+	if espObjects[object] then return end
+	local box = Instance.new("Highlight")
+	box.Name = "FTF_ESP"
+	box.FillColor = color
+	box.FillTransparency = 0.5
+	box.OutlineColor = Color3.fromRGB(255, 255, 255)
+	box.Adornee = object
+	box.Parent = CoreGui
+	espObjects[object] = box
+end
+
+local coreConn = RunService.Heartbeat:Connect(function()
+	local char = LocalPlayer.Character
+	if char and char:FindFirstChild("Humanoid") then
+		local hum = char.Humanoid
+		if hum.MoveDirection.Magnitude > 0 then
+			local isCrouching = false
+			for _, anim in pairs(hum:GetPlayingAnimationTracks()) do
+				if anim.Name:lower():find("crouch") or anim.Animation.AnimationId:find("crouch") then
+					isCrouching = true
+					break
+				end
+			end
+			hum.WalkSpeed = isCrouching and current.CrouchSpeed or current.StandSpeed
+		end
+	end
+
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+			local isBeast = p.Character:FindFirstChild("BeastHammer") or p.Character:FindFirstChild("Hammer") or p:FindFirstChild("Attributes") and p.Attributes:GetAttribute("IsBeast")
+			if isBeast and current.BeastEsp then
+				applyESP(p.Character, Color3.fromRGB(255, 0, 0))
+			elseif not isBeast and current.PlayerEsp then
+				applyESP(p.Character, Color3.fromRGB(0, 255, 0))
+			else
+				if espObjects[p.Character] then
+					espObjects[p.Character]:Destroy()
+					espObjects[p.Character] = nil
+				end
+			end
+		end
+	end
+
+	if current.ComputerEsp then
+		for _, v in pairs(workspace:GetDescendants()) do
+			if v.Name == "ComputerTable" or v:FindFirstChild("ComputerTrigger") then
+				applyESP(v, Color3.fromRGB(0, 150, 255))
+			end
+		end
+	else
+		for obj, esp in pairs(espObjects) do
+			if obj and obj.Name == "ComputerTable" then
+				esp:Destroy()
+				espObjects[obj] = nil
+			end
+		end
+	end
+
+	if current.SilentHack then
+		for _, sound in pairs(SoundService:GetDescendants()) do
+			if sound:IsA("Sound") and (sound.Name:lower():find("error") or sound.Name:lower():find("fail") or sound.Name:lower():find("explode")) then
+				sound.Volume = 0
+			end
+		end
+		for _, sound in pairs(workspace:GetDescendants()) do
+			if sound:IsA("Sound") and (sound.Name:lower():find("error") or sound.Name:lower():find("fail") or sound.Name:lower():find("explode")) then
+				sound.Volume = 0
+			end
+		end
+	end
+end)
+table.insert(connections, coreConn)
+
+table.insert(connections, Players.PlayerRemoving:Connect(function(p)
+	if p.Character and espObjects[p.Character] then
+		espObjects[p.Character]:Destroy()
+		espObjects[p.Character] = nil
+	end
+end))
