@@ -1,4 +1,4 @@
--- [[ FLEE THE FACILITY ULTIMATE HUB v9.4 - PART 1 ]]
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.5 - PART 1 ]]
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -41,9 +41,10 @@ local origLighting = {
 local connections = {}
 local espObjects = {}
 local toggleButtons = {}
+local isLocalCrouching = false -- Pelacak status jongkok murni pemain
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "FTF_Premium_Menu_V9_4"
+ScreenGui.Name = "FTF_Premium_Menu_V9_5"
 ScreenGui.Parent = CoreGui or LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 
@@ -86,7 +87,7 @@ table.insert(connections, dragConn2)
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(0, 300, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "FTF HUB - PREMIUM v9.4"
+Title.Text = "FTF HUB - PREMIUM v9.5 (FINAL FIXED)"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
@@ -183,7 +184,7 @@ Content.Position = UDim2.new(0, 10, 0, 40)
 Content.BackgroundTransparency = 1
 Content.Parent = MainFrame
 
--- [[ FLEE THE FACILITY ULTIMATE HUB v9.4 - PART 2 ]]
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.5 - PART 2 ]]
 local function createSlider(name, min, max, default, pos, callback)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(0, 210, 0, 15)
@@ -356,7 +357,7 @@ but.Font = Enum.Font.SourceSansBold
 but.TextSize = 14
 round(but)
 
--- [[ FLEE THE FACILITY ULTIMATE HUB v9.4 - PART 3 ]]
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.5 - PART 3 ]]
 but.MouseButton1Click:Connect(function()
 	local inputText = inp.Text:lower()
 	if inputText == "" then return end
@@ -391,7 +392,7 @@ ExitBtn.MouseButton1Click:Connect(function()
 	ConfirmFrame.Visible = true
 end)
 
-NoBtn.MouseButton1Connect = NoBtn.MouseButton1Click:Connect(function()
+NoBtn.MouseButton1Click:Connect(function()
 	ConfirmFrame.Visible = false
 end)
 
@@ -402,11 +403,8 @@ local function restoreLighting()
 	Lighting.ClockTime = origLighting.ClockTime
 	Lighting.FogEnd = origLighting.FogEnd
 	Lighting.FogStart = origLighting.FogStart
-	
 	local atm = Lighting:FindFirstChildOfClass("Atmosphere")
-	if atm then
-		atm.Density = 0.3 -- Mengembalikan ketebalan partikel debu bawaan game
-	end
+	if atm then atm.Density = 0.3 end
 end
 
 SubmitBtn.MouseButton1Click:Connect(function()
@@ -438,7 +436,6 @@ ResetBtn.MouseButton1Click:Connect(function()
 	inp.Text = ""
 	
 	if toggleButtons["SilentHack"] then toggleButtons["SilentHack"](false) end
-	if toggleButtons["PlayerEsp"] then toggleButtons["PlayerVisual"](false) end
 	if toggleButtons["PlayerEsp"] then toggleButtons["PlayerEsp"](false) end
 	if toggleButtons["BeastEsp"] then toggleButtons["BeastEsp"](false) end
 	if toggleButtons["ComputerEsp"] then toggleButtons["ComputerEsp"](false) end
@@ -446,6 +443,15 @@ ResetBtn.MouseButton1Click:Connect(function()
 	if toggleButtons["FullBright"] then toggleButtons["FullBright"](false) end
 	restoreLighting()
 end)
+
+-- Deteksi input jongkok secara murni dari keyboard/tombol layar (C / LeftCtrl)
+local inputConn1 = UserInputService.InputBegan:Connect(function(input, processed)
+	if processed then return end
+	if input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.LeftControl then
+		isLocalCrouching = not isLocalCrouching
+	end
+end)
+table.insert(connections, inputConn1)
 
 local function applyESP(object, color, isPlayer, pName)
 	if espObjects[object] then 
@@ -461,9 +467,11 @@ local function applyESP(object, color, isPlayer, pName)
 		end
 		return 
 	end
+	-- Memindahkan penempatan Highlight agar tidak diblokir Executor terbaru (Dimasukkan ke PlayerGui)
 	local box = Instance.new("Highlight")
 	box.Name = "FTF_ESP"; box.FillColor = color; box.FillTransparency = 0.5
-	box.OutlineColor = Color3.fromRGB(255, 255, 255); box.Adornee = object; box.Parent = CoreGui
+	box.OutlineColor = Color3.fromRGB(255, 255, 255); box.Adornee = object
+	box.Parent = LocalPlayer:WaitForChild("PlayerGui")
 	espObjects[object] = box
 end
 
@@ -473,12 +481,12 @@ local function removeESP(object)
 end
 
 local coreConn = RunService.Heartbeat:Connect(function()
+	-- 1. BACKEND SEPARATE SPEED ENGINE (TERPISAH KARENA PAKAI INPUT TRACKER)
 	local char = LocalPlayer.Character
-	if char and char:FindFirstChild("Humanoid") and char:FindFirstChild("HumanoidRootPart") then
+	if char and char:FindFirstChild("Humanoid") then
 		local hum = char.Humanoid
 		if hum.MoveDirection.Magnitude > 0 then
-			local isCrouching = (hum.HipHeight < 1.5) or char:FindFirstChild("LowerTorso") and char.LowerTorso.Position.Y < char.HumanoidRootPart.Position.Y
-			if isCrouching then
+			if isLocalCrouching then
 				hum.WalkSpeed = current.CrouchSpeed
 			else
 				hum.WalkSpeed = current.StandSpeed
@@ -486,6 +494,7 @@ local coreConn = RunService.Heartbeat:Connect(function()
 		end
 	end
 
+	-- 2. BACKEND ENGINE BRIGHTNESS MAP
 	if current.FullBright then
 		Lighting.Ambient = Color3.fromRGB(255, 255, 255)
 		Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
@@ -498,14 +507,12 @@ local coreConn = RunService.Heartbeat:Connect(function()
 		Lighting.ClockTime = origLighting.ClockTime
 	end
 
-	-- 3. ENGINE UTAMA HAPUS KABUT & DEBU ATMOSFER MAP
+	-- 3. BACKEND ENGINE NO FOG / NO DUST
 	if current.RemoveFog then
-		Lighting.FogEnd = 999999 -- Membuang jarak pandang kabut ke tak terhingga
+		Lighting.FogEnd = 999999
 		Lighting.FogStart = 999999
 		local atm = Lighting:FindFirstChildOfClass("Atmosphere")
-		if atm then
-			atm.Density = 0 -- Menghapus total partikel debu melayang agar jernih
-		end
+		if atm then atm.Density = 0 end
 	else
 		if not current.FullBright then
 			Lighting.FogEnd = origLighting.FogEnd
@@ -515,6 +522,7 @@ local coreConn = RunService.Heartbeat:Connect(function()
 		end
 	end
 
+	-- 4. BACKEND ENGINE DETEKSI REFRESH ESP UTAMA
 	for _, p in pairs(Players:GetPlayers()) do
 		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
 			local isBeast = p.Character:FindFirstChild("BeastHammer") or p.Character:FindFirstChild("Hammer") or (p:FindFirstChild("Attributes") and p.Attributes:GetAttribute("IsBeast"))
@@ -554,3 +562,4 @@ table.insert(connections, coreConn)
 table.insert(connections, Players.PlayerRemoving:Connect(function(p)
 	if p.Character then removeESP(p.Character) end
 end))
+
