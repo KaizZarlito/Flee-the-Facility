@@ -1,5 +1,4 @@
 -- [[ FLEE THE FACILITY EXPLOIT HUB v8.0 - PART 1 ]]
-
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -25,20 +24,18 @@ local current = {
 }
 
 local connections = {}
-
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "FTF_Premium_Menu_V8"
 ScreenGui.Parent = CoreGui or LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 
--- Layout Utama: Pendek & Lebar Kesamping (Horizontal)
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 480, 0, 260)
-MainFrame.Position = UDim2.new(0.5, -240, 0.1, 0) -- Statis di atas tengah layar
+MainFrame.Position = UDim2.new(0.5, -240, 0.1, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
-MainFrame.Draggable = false -- DINONAKTIFKAN SEPERTI PERMINTAANMU AGAR SPEED WORK
+MainFrame.Draggable = false
 MainFrame.Parent = ScreenGui
 
 local TopBar = Instance.new("Frame")
@@ -77,7 +74,6 @@ MiniBtn.Font = Enum.Font.SourceSansBold
 MiniBtn.TextSize = 14
 MiniBtn.Parent = TopBar
 
--- Tombol Open Hijau Dikembalikan ke Kiri Atas Layar
 local OpenBtn = Instance.new("TextButton")
 OpenBtn.Size = UDim2.new(0, 90, 0, 30)
 OpenBtn.Position = UDim2.new(0, 15, 0, 15) 
@@ -89,7 +85,7 @@ OpenBtn.TextSize = 12
 OpenBtn.Visible = false
 OpenBtn.Parent = ScreenGui
 
--- ==================== POP-UP PANEL KONFIRMASI TOMBOL X ====================
+-- [[ FLEE THE FACILITY EXPLOIT HUB v8.0 - PART 2 ]]
 local ConfirmFrame = Instance.new("Frame")
 ConfirmFrame.Size = UDim2.new(0, 260, 0, 120)
 ConfirmFrame.Position = UDim2.new(0.5, -130, 0.5, -60)
@@ -182,7 +178,6 @@ local function createSlider(name, min, max, default, pos, callback)
 		local bgX = bg.AbsolutePosition.X
 		local bgWidth = bg.AbsoluteSize.X
 		local posPercent = math.clamp((inputX - bgX) / bgWidth, 0, 1)
-		
 		fill.Size = UDim2.new(posPercent, 0, 1, 0)
 		local val = math.floor(min + (posPercent * (max - min)))
 		label.Text = name .. ": " .. val
@@ -206,10 +201,10 @@ local function createSlider(name, min, max, default, pos, callback)
 			dragging = false 
 		end
 	end)
-
 	return {Label = label, Fill = fill, Min = min, Max = max}
 end
 
+-- [[ FLEE THE FACILITY EXPLOIT HUB v8.0 - PART 3 ]]
 local standSlider = createSlider("Speed Berdiri", 16, 45, current.StandSpeed, UDim2.new(0, 0, 0, 5), function(v) current.StandSpeed = v end)
 local crouchSlider = createSlider("Speed Jongkok", 8, 30, current.CrouchSpeed, UDim2.new(0, 0, 0, 45), function(v) current.CrouchSpeed = v end)
 
@@ -239,13 +234,13 @@ local function createToggle(name, default, pos, callback)
 
 	local lbl = Instance.new("TextLabel")
 	lbl.Size = UDim2.new(0, 190, 0, 20)
-	lbl.Position = pos + UDim2.new(0, 28, 0, 0)
+	lbl.Position = pos + UDim2.new(0, 30, 0, 0)
 	lbl.Text = name
-	lbl.TextColor3 = Color3.fromRGB(220, 220, 220)
-	lbl.TextXAlignment = Enum.TextXAlignment.Left
+	lbl.TextColor3 = Color3.fromRGB(200, 200, 200)
 	lbl.BackgroundTransparency = 1
+	lbl.TextXAlignment = Enum.TextXAlignment.Left
 	lbl.Font = Enum.Font.SourceSans
-	lbl.TextSize = 13
+	lbl.TextSize = 14
 	lbl.Parent = Content
 
 	btn.MouseButton1Click:Connect(function()
@@ -254,232 +249,41 @@ local function createToggle(name, default, pos, callback)
 		btn.Text = state and "✓" or ""
 		callback(state)
 	end)
-
-	return {Button = btn, SetState = function(newState)
-		state = newState
-		btn.BackgroundColor3 = state and Color3.fromRGB(0, 180, 80) or Color3.fromRGB(80, 80, 80)
-		btn.Text = state and "✓" or ""
-	end}
+	return btn
 end
 
-local togglePlayer = createToggle("ESP Survivor", current.PlayerEsp, UDim2.new(0, 240, 0, 5), function(v) current.PlayerEsp = v end)
-local toggleBeast = createToggle("ESP Beast", current.BeastEsp, UDim2.new(0, 240, 0, 35), function(v) current.BeastEsp = v end)
-local togglePC = createToggle("ESP Computer", current.ComputerEsp, UDim2.new(0, 240, 0, 65), function(v) current.ComputerEsp = v end)
-local toggleSilent = createToggle("Silent Hack (PC Anti-Bunyi)", current.SilentHack, UDim2.new(0, 240, 0, 95), function(v) current.SilentHack = v end)
+local silentTgl = createToggle("Silent Hack (No Fail)", current.SilentHack, UDim2.new(0, 240, 0, 5), function(v) current.SilentHack = v end)
+local pEspTgl = createToggle("Player ESP", current.PlayerEsp, UDim2.new(0, 240, 0, 35), function(v) current.PlayerEsp = v end)
+local bEspTgl = createToggle("Beast ESP", current.BeastEsp, UDim2.new(0, 240, 0, 65), function(v) current.BeastEsp = v end)
+local cEspTgl = createToggle("Computer ESP", current.ComputerEsp, UDim2.new(0, 240, 0, 95), function(v) current.ComputerEsp = v end)
 
-local inp = Instance.new("TextBox")
-inp.Name = "inp"
-inp.Size = UDim2.new(1, 0, 0, 32)
-inp.Position = UDim2.new(0, 0, 0, 145)
-inp.BackgroundColor3 = Color3.fromRGB(18, 46, 68)
-inp.PlaceholderText = " Masukkan sebagian nama / Display name target..."
-inp.Text = ""
-inp.TextColor3 = Color3.fromRGB(255, 255, 255)
-inp.TextXAlignment = Enum.TextXAlignment.Left
-inp.Font = Enum.Font.SourceSans
-inp.TextSize = 13
-inp.Parent = Content
-round(inp)
-
-local but = Instance.new("TextButton")
-but.Name = "but"
-but.Size = UDim2.new(1, 0, 0, 32)
-but.Position = UDim2.new(0, 0, 0, 182)
-but.BackgroundColor3 = Color3.fromRGB(38, 38, 38)
-but.Text = "Teleport Sekarang"
-but.TextColor3 = Color3.fromRGB(255, 255, 255)
-but.Font = Enum.Font.SourceSansBoldbut.TextSize = 13
-but.Parent = Contentround(but)
-
-### Bagian 2: Logika Loop Konparasi Sistem ESP, Silent Hack, dan Tombol Konfirmasi
-
-```lua
--- [[ FLEE THE FACILITY EXPLOIT HUB v8.0 - PART 2 ]]
-
-local function clearESP(tag)
-	for _, obj in pairs(workspace:GetDescendants()) do
-		if obj.Name == "FTF_ESP" and obj:GetAttribute("ESP_Type") == tag then
-			obj:Destroy()
-		elseif obj.Name == "FTF_Label" and obj:GetAttribute("ESP_Type") == tag then
-			obj:Destroy()
-		end
-	end
-end
-
-local function clearAllESP()
-	clearESP("Player")
-	clearESP("Beast")
-	clearESP("Computer")
-end
-
-but.MouseButton1Click:Connect(function()
-	local inputText = inp.Text:lower()
-	if inputText == "" then return end
-	local targetPlayer = nil
-
-	for _, player in pairs(Players:GetPlayers()) do
-		local uname = player.Name:lower()
-		local dname = player.DisplayName:lower()
-		if uname:find(inputText) or dname:find(inputText) then
-			targetPlayer = player
-			break
-		end
-	end
-
-	if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-		local myChar = LocalPlayer.Character
-		if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-			myChar.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(3, 0, 0)
-		end
-	end
-end)
-
-ResetBtn.MouseButton1Click:Connect(function()
-	current.StandSpeed = defaults.StandSpeed
-	current.CrouchSpeed = defaults.CrouchSpeed
-	current.SilentHack = defaults.SilentHack
-	current.PlayerEsp = defaults.PlayerEsp
-	current.BeastEsp = defaults.BeastEsp
-	current.ComputerEsp = defaults.ComputerEsp
-	
-	togglePlayer.SetState(defaults.PlayerEsp)
-	toggleBeast.SetState(defaults.BeastEsp)
-	togglePC.SetState(defaults.ComputerEsp)
-	toggleSilent.SetState(defaults.SilentHack)
-	
-	inp.Text = ""
-	clearAllESP()
-	
-	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-		LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = defaults.StandSpeed
-	end
-	
-	standSlider.Label.Text = "Speed Berdiri: " .. current.StandSpeed
-	standSlider.Fill.Size = UDim2.new((current.StandSpeed - standSlider.Min) / (standSlider.Max - standSlider.Min), 0, 1, 0)
-	
-	crouchSlider.Label.Text = "Speed Jongkok: " .. current.CrouchSpeed
-	crouchSlider.Fill.Size = UDim2.new((current.CrouchSpeed - crouchSlider.Min) / (crouchSlider.Max - crouchSlider.Min), 0, 1, 0)
-end)
-
-local remoteHook = ReplicatedStorage:WaitForChild("RemoteEvent")
-local oldNamecall
-oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
-	local method = getnamecallmethod()
-	local args = {...}
-	if current.SilentHack and self == remoteHook and method == "FireServer" then
-		if args == "SetComputerProgress" and args == true then 
-			args = false 
-			return oldNamecall(self, unpack(args))
-		end
-	end
-	return oldNamecall(self, unpack(args))
-end)
-
-connections.SpeedLoop = RunService.Heartbeat:Connect(function()
-	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-		local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-		local isCrouching = LocalPlayer.Character:GetAttribute("Crouching") or (hum.WalkSpeed < 10 and hum.WalkSpeed > 0)
-		if isCrouching then
-			hum.WalkSpeed = current.CrouchSpeed
-		else
-			if hum.WalkSpeed > 0 then hum.WalkSpeed = current.StandSpeed end
-		end
-	end
-end)
-
-local function applyESP(part, color, textName, tag)
-	if part:FindFirstChild("FTF_ESP") then return end
-	
-	local box = Instance.new("BoxHandleAdornment")
-	box.Name = "FTF_ESP"
-	box.Size = part.Size + Vector3.new(0.1, 0.1, 0.1)
-	box.AlwaysOnTop = true
-	box.ZIndex = 5
-	box.Adornee = part
-	box.Color3 = color
-	box.Transparency = 0.5
-	box:SetAttribute("ESP_Type", tag)
-	box.Parent = part
-	
-	local billboard = Instance.new("BillboardGui")
-	billboard.Name = "FTF_Label"
-	billboard.Size = UDim2.new(0, 100, 0, 30)
-	billboard.AlwaysOnTop = true
-	billboard.Adornee = part
-	billboard.Parent = part
-	billboard:SetAttribute("ESP_Type", tag)
-	
-	local text = Instance.new("TextLabel")
-	text.Size = UDim2.new(1, 0, 1, 0)
-	text.BackgroundTransparency = 1
-	text.Text = textName
-	text.TextColor3 = color
-	text.Font = Enum.Font.SourceSansBold
-	text.TextSize = 12
-	text.Parent = billboard
-end
-
-connections.ESPLoop = RunService.Heartbeat:Connect(function()
-	for _, p in pairs(Players:GetPlayers()) do
-		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-			local hrp = p.Character.HumanoidRootPart
-			local isBeast = p.Character:FindFirstChild("BeastWeapon") or p:GetAttribute("IsBeast")
-			
-			if isBeast then
-				if current.BeastEsp then
-					applyESP(hrp, Color3.fromRGB(255, 0, 0), "[ BEAST ] " .. p.Name, "Beast")
-				else
-					if hrp:FindFirstChild("FTF_ESP") and hrp.FTF_ESP:GetAttribute("ESP_Type") == "Beast" then clearESP("Beast") end
-				end
-			else
-				if current.PlayerEsp then
-					applyESP(hrp, Color3.fromRGB(0, 255, 100), p.Name, "Player")
-				else
-					if hrp:FindFirstChild("FTF_ESP") and hrp.FTF_ESP:GetAttribute("ESP_Type") == "Player" then clearESP("Player") end
-				end
-			end
-		end
-	end
-	
-	for _, obj in pairs(workspace:GetDescendants()) do
-		if obj.Name == "ComputerTable" and obj:FindFirstChild("Screen") then
-			if current.ComputerEsp then
-				applyESP(obj.Screen, Color3.fromRGB(0, 200, 255), "💻 PC", "Computer")
-			else
-				if obj.Screen:FindFirstChild("FTF_ESP") then clearESP("Computer") end
-			end
-		end
-	end
-end)
-
--- Tombol Minimize (-)
 MiniBtn.MouseButton1Click:Connect(function()
 	MainFrame.Visible = false
 	OpenBtn.Visible = true
 end)
 
--- Tombol Open Hijau
 OpenBtn.MouseButton1Click:Connect(function()
 	MainFrame.Visible = true
 	OpenBtn.Visible = false
 end)
 
--- ==================== LOGIKA POP-UP TOMBOL X (PEYAKIN KELUAR) ====================
 ExitBtn.MouseButton1Click:Connect(function()
-	ConfirmFrame.Visible = true -- Tampilkan kotak peyakin
+	ConfirmFrame.Visible = true
 end)
 
 NoBtn.MouseButton1Click:Connect(function()
-	ConfirmFrame.Visible = false -- Tutup kotak peyakin dan kembali bermain
+	ConfirmFrame.Visible = false
 end)
 
 SubmitBtn.MouseButton1Click:Connect(function()
-	-- Hancurkan skrip secara total hanya jika menekan "Submit"
-	current.SilentHack = false
-	for _, conn in pairs(connections) do if conn then conn:Disconnect() end end
-	clearAllESP()
-	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-		LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = defaults.StandSpeed
-	end
 	ScreenGui:Destroy()
+end)
+
+ResetBtn.MouseButton1Click:Connect(function()
+	current.StandSpeed = defaults.StandSpeed
+	current.CrouchSpeed = defaults.CrouchSpeed
+	standSlider.Fill.Size = UDim2.new((defaults.StandSpeed - standSlider.Min) / (standSlider.Max - standSlider.Min), 0, 1, 0)
+	standSlider.Label.Text = "Speed Berdiri: " .. defaults.StandSpeed
+	crouchSlider.Fill.Size = UDim2.new((defaults.CrouchSpeed - crouchSlider.Min) / (crouchSlider.Max - crouchSlider.Min), 0, 1, 0)
+	crouchSlider.Label.Text = "Speed Jongkok: " .. defaults.CrouchSpeed
 end)
