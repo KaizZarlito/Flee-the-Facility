@@ -1,10 +1,11 @@
--- [[ FLEE THE FACILITY ULTIMATE HUB v9.2 - PART 1 ]]
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.4 - PART 1 ]]
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local SoundService = game:GetService("SoundService")
+local Lighting = game:GetService("Lighting")
 
 local defaults = {
 	StandSpeed = 16,
@@ -12,7 +13,9 @@ local defaults = {
 	SilentHack = false,
 	PlayerEsp = false,
 	BeastEsp = false,
-	ComputerEsp = false
+	ComputerEsp = false,
+	RemoveFog = false,
+	FullBright = false
 }
 
 local current = {
@@ -21,15 +24,26 @@ local current = {
 	SilentHack = false,
 	PlayerEsp = false,
 	BeastEsp = false,
-	ComputerEsp = false
+	ComputerEsp = false,
+	RemoveFog = false,
+	FullBright = false
+}
+
+local origLighting = {
+	Ambient = Lighting.Ambient,
+	OutdoorAmbient = Lighting.OutdoorAmbient,
+	Brightness = Lighting.Brightness,
+	ClockTime = Lighting.ClockTime,
+	FogEnd = Lighting.FogEnd,
+	FogStart = Lighting.FogStart
 }
 
 local connections = {}
 local espObjects = {}
-local toggleButtons = {} -- Tempat menyimpan data tombol agar sinkron saat di-reset
+local toggleButtons = {}
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "FTF_Premium_Menu_V9_2"
+ScreenGui.Name = "FTF_Premium_Menu_V9_4"
 ScreenGui.Parent = CoreGui or LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 
@@ -39,7 +53,7 @@ MainFrame.Position = UDim2.new(0.5, -270, 0.3, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
-MainFrame.Draggable = false -- Dimatikan agar bentrok drag bawaan roblox tidak error
+MainFrame.Draggable = false
 MainFrame.Parent = ScreenGui
 
 local TopBar = Instance.new("Frame")
@@ -47,7 +61,6 @@ TopBar.Size = UDim2.new(1, 0, 0, 30)
 TopBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 TopBar.Parent = MainFrame
 
--- SISTEM DRAG / GESER MENU (LOGIKA KUSTOM TERBARU)
 local dragging, dragStart, startPos
 TopBar.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -71,9 +84,9 @@ table.insert(connections, dragConn1)
 table.insert(connections, dragConn2)
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(0.6, 0, 1, 0)
+Title.Size = UDim2.new(0, 300, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "FTF HUB - PREMIUM v9.2 (DRAG & NAME ESP)"
+Title.Text = "FTF HUB - PREMIUM v9.4"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
@@ -103,7 +116,7 @@ MiniBtn.Parent = TopBar
 
 local OpenBtn = Instance.new("TextButton")
 OpenBtn.Size = UDim2.new(0, 100, 0, 35)
-OpenBtn.Position = UDim2.new(0, 15, 0, 15) -- Kunci Kiri Atas
+OpenBtn.Position = UDim2.new(0, 15, 0, 15)
 OpenBtn.BackgroundColor3 = Color3.fromRGB(40, 180, 100)
 OpenBtn.Text = "OPEN MENU"
 OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -170,7 +183,7 @@ Content.Position = UDim2.new(0, 10, 0, 40)
 Content.BackgroundTransparency = 1
 Content.Parent = MainFrame
 
--- [[ FLEE THE FACILITY ULTIMATE HUB v9.2 - PART 2 ]]
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.4 - PART 2 ]]
 local function createSlider(name, min, max, default, pos, callback)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(0, 210, 0, 15)
@@ -239,7 +252,6 @@ end
 local standSlider = createSlider("Speed Berdiri", 16, 45, current.StandSpeed, UDim2.new(0, 0, 0, 5), function(v) current.StandSpeed = v end)
 local crouchSlider = createSlider("Speed Jongkok", 8, 30, current.CrouchSpeed, UDim2.new(0, 0, 0, 45), function(v) current.CrouchSpeed = v end)
 
--- TOMBOL RESET KESELURUHAN (TOTAL)
 local ResetBtn = Instance.new("TextButton")
 ResetBtn.Size = UDim2.new(0, 100, 0, 35)
 ResetBtn.Position = UDim2.new(0, 0, 0, 95)
@@ -251,11 +263,10 @@ ResetBtn.TextSize = 13
 ResetBtn.Parent = Content
 round(ResetBtn)
 
--- TOMBOL RESET KHUSUS KECEPATAN SAJA
 local ResetSpeedBtn = Instance.new("TextButton")
 ResetSpeedBtn.Size = UDim2.new(0, 105, 0, 35)
 ResetSpeedBtn.Position = UDim2.new(0, 105, 0, 95)
-ResetSpeedBtn.BackgroundColor3 = Color3.fromRGB(150, 40, 40) -- Warna Merah Marun
+ResetSpeedBtn.BackgroundColor3 = Color3.fromRGB(150, 40, 40)
 ResetSpeedBtn.Text = "Reset Speed Saja"
 ResetSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ResetSpeedBtn.Font = Enum.Font.SourceSansBold
@@ -263,7 +274,6 @@ ResetSpeedBtn.TextSize = 13
 ResetSpeedBtn.Parent = Content
 round(ResetSpeedBtn)
 
--- FUNGSI MEMBUAT BUTTON CEKLIS (TOGGLE DENGAN SINKRONISASI RESET)
 local function createToggle(keyName, name, default, pos, callback)
 	local state = default
 	local btn = Instance.new("TextButton")
@@ -299,15 +309,16 @@ local function createToggle(keyName, name, default, pos, callback)
 		updateVisual(not state)
 	end)
 
-	-- Simpan referensi fungsi pembaru visual ke tabel global
 	toggleButtons[keyName] = updateVisual
 	return btn
 end
 
 createToggle("SilentHack", "Silent Hack", current.SilentHack, UDim2.new(0, 240, 0, 5), function(v) current.SilentHack = v end)
-createToggle("PlayerEsp", "Player ESP", current.PlayerEsp, UDim2.new(0, 240, 0, 35), function(v) current.PlayerEsp = v end)
-createToggle("BeastEsp", "Beast ESP", current.BeastEsp, UDim2.new(0, 240, 0, 65), function(v) current.BeastEsp = v end)
-createToggle("ComputerEsp", "Computer ESP", current.ComputerEsp, UDim2.new(0, 240, 0, 95), function(v) current.ComputerEsp = v end)
+createToggle("PlayerEsp", "Player ESP", current.PlayerEsp, UDim2.new(0, 240, 0, 30), function(v) current.PlayerEsp = v end)
+createToggle("BeastEsp", "Beast ESP", current.BeastEsp, UDim2.new(0, 240, 0, 55), function(v) current.BeastEsp = v end)
+createToggle("ComputerEsp", "Computer ESP", current.ComputerEsp, UDim2.new(0, 240, 0, 80), function(v) current.ComputerEsp = v end)
+createToggle("RemoveFog", "Hapus Kabut & Debu Map", current.RemoveFog, UDim2.new(0, 240, 0, 105), function(v) current.RemoveFog = v end)
+createToggle("FullBright", "Full Brightness Map", current.FullBright, UDim2.new(0, 240, 0, 130), function(v) current.FullBright = v end)
 
 local TeleportTitle = Instance.new("TextLabel")
 TeleportTitle.Size = UDim2.new(0, 210, 0, 20)
@@ -345,7 +356,7 @@ but.Font = Enum.Font.SourceSansBold
 but.TextSize = 14
 round(but)
 
--- [[ FLEE THE FACILITY ULTIMATE HUB v9.2 - PART 3 ]]
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.4 - PART 3 ]]
 but.MouseButton1Click:Connect(function()
 	local inputText = inp.Text:lower()
 	if inputText == "" then return end
@@ -380,9 +391,23 @@ ExitBtn.MouseButton1Click:Connect(function()
 	ConfirmFrame.Visible = true
 end)
 
-NoBtn.MouseButton1Click:Connect(function()
+NoBtn.MouseButton1Connect = NoBtn.MouseButton1Click:Connect(function()
 	ConfirmFrame.Visible = false
 end)
+
+local function restoreLighting()
+	Lighting.Ambient = origLighting.Ambient
+	Lighting.OutdoorAmbient = origLighting.OutdoorAmbient
+	Lighting.Brightness = origLighting.Brightness
+	Lighting.ClockTime = origLighting.ClockTime
+	Lighting.FogEnd = origLighting.FogEnd
+	Lighting.FogStart = origLighting.FogStart
+	
+	local atm = Lighting:FindFirstChildOfClass("Atmosphere")
+	if atm then
+		atm.Density = 0.3 -- Mengembalikan ketebalan partikel debu bawaan game
+	end
+end
 
 SubmitBtn.MouseButton1Click:Connect(function()
 	for _, conn in pairs(connections) do
@@ -391,10 +416,10 @@ SubmitBtn.MouseButton1Click:Connect(function()
 	for _, esp in pairs(espObjects) do
 		if esp then esp:Destroy() end
 	end
+	restoreLighting()
 	ScreenGui:Destroy()
 end)
 
--- AKSI RESET SPEED SAJA
 ResetSpeedBtn.MouseButton1Click:Connect(function()
 	current.StandSpeed = defaults.StandSpeed
 	current.CrouchSpeed = defaults.CrouchSpeed
@@ -404,7 +429,6 @@ ResetSpeedBtn.MouseButton1Click:Connect(function()
 	crouchSlider.Label.Text = "Speed Jongkok: " .. defaults.CrouchSpeed
 end)
 
--- AKSI RESET TOTAL (CEKLIS IKUT HILANG OTOMATIS)
 ResetBtn.MouseButton1Click:Connect(function()
 	for k, v in pairs(defaults) do current[k] = v end
 	standSlider.Fill.Size = UDim2.new((defaults.StandSpeed - standSlider.Min) / (standSlider.Max - standSlider.Min), 0, 1, 0)
@@ -413,97 +437,87 @@ ResetBtn.MouseButton1Click:Connect(function()
 	crouchSlider.Label.Text = "Speed Jongkok: " .. defaults.CrouchSpeed
 	inp.Text = ""
 	
-	-- Memaksa visual tombol toggle langsung mati/kembali ke default
 	if toggleButtons["SilentHack"] then toggleButtons["SilentHack"](false) end
+	if toggleButtons["PlayerEsp"] then toggleButtons["PlayerVisual"](false) end
 	if toggleButtons["PlayerEsp"] then toggleButtons["PlayerEsp"](false) end
 	if toggleButtons["BeastEsp"] then toggleButtons["BeastEsp"](false) end
 	if toggleButtons["ComputerEsp"] then toggleButtons["ComputerEsp"](false) end
+	if toggleButtons["RemoveFog"] then toggleButtons["RemoveFog"](false) end
+	if toggleButtons["FullBright"] then toggleButtons["FullBright"](false) end
+	restoreLighting()
 end)
 
--- LOGIKA ESP DENGAN NAMA PLAYER ASLI MELAYANG
 local function applyESP(object, color, isPlayer, pName)
 	if espObjects[object] then 
-		-- Jika nama tag hilang tapi highlight ada, pasang ulang
 		if isPlayer and object:FindFirstChild("Head") and not object.Head:FindFirstChild("FTF_NameTag") then
 			local bb = Instance.new("BillboardGui")
-			bb.Name = "FTF_NameTag"
-			bb.Size = UDim2.new(0, 100, 0, 30)
-			bb.AlwaysOnTop = true
-			bb.StudsOffset = Vector3.new(0, 3, 0)
-			
+			bb.Name = "FTF_NameTag"; bb.Size = UDim2.new(0, 100, 0, 30)
+			bb.AlwaysOnTop = true; bb.StudsOffset = Vector3.new(0, 3, 0)
 			local tl = Instance.new("TextLabel", bb)
-			tl.Size = UDim2.new(1, 0, 1, 0)
-			tl.BackgroundTransparency = 1
-			tl.Text = pName or object.Name
-			tl.TextColor3 = color
-			tl.Font = Enum.Font.SourceSansBold
-			tl.TextSize = 14
-			tl.TextStrokeTransparency = 0
-			
+			tl.Size = UDim2.new(1, 0, 1, 0); tl.BackgroundTransparency = 1
+			tl.Text = pName or object.Name; tl.TextColor3 = color
+			tl.Font = Enum.Font.SourceSansBold; tl.TextSize = 14; tl.TextStrokeTransparency = 0
 			bb.Parent = object.Head
 		end
 		return 
 	end
-	
 	local box = Instance.new("Highlight")
-	box.Name = "FTF_ESP"
-	box.FillColor = color
-	box.FillTransparency = 0.5
-	box.OutlineColor = Color3.fromRGB(255, 255, 255)
-	box.Adornee = object
-	box.Parent = CoreGui
+	box.Name = "FTF_ESP"; box.FillColor = color; box.FillTransparency = 0.5
+	box.OutlineColor = Color3.fromRGB(255, 255, 255); box.Adornee = object; box.Parent = CoreGui
 	espObjects[object] = box
-
-	if isPlayer and object:FindFirstChild("Head") then
-		local bb = Instance.new("BillboardGui")
-		bb.Name = "FTF_NameTag"
-		bb.Size = UDim2.new(0, 100, 0, 30)
-		bb.AlwaysOnTop = true
-		bb.StudsOffset = Vector3.new(0, 3, 0)
-		
-		local tl = Instance.new("TextLabel", bb)
-		tl.Size = UDim2.new(1, 0, 1, 0)
-		tl.BackgroundTransparency = 1
-		tl.Text = pName or object.Name
-		tl.TextColor3 = color
-		tl.Font = Enum.Font.SourceSansBold
-		tl.TextSize = 14
-		tl.TextStrokeTransparency = 0
-		
-		bb.Parent = object.Head
-	end
 end
 
 local function removeESP(object)
-	if espObjects[object] then
-		espObjects[object]:Destroy()
-		espObjects[object] = nil
-	end
-	if object and object:FindFirstChild("Head") and object.Head:FindFirstChild("FTF_NameTag") then
-		object.Head.FTF_NameTag:Destroy()
-	end
+	if espObjects[object] then espObjects[object]:Destroy(); espObjects[object] = nil end
+	if object and object:FindFirstChild("Head") and object.Head:FindFirstChild("FTF_NameTag") then object.Head.FTF_NameTag:Destroy() end
 end
 
 local coreConn = RunService.Heartbeat:Connect(function()
 	local char = LocalPlayer.Character
-	if char and char:FindFirstChild("Humanoid") then
+	if char and char:FindFirstChild("Humanoid") and char:FindFirstChild("HumanoidRootPart") then
 		local hum = char.Humanoid
 		if hum.MoveDirection.Magnitude > 0 then
-			local isCrouching = false
-			for _, anim in pairs(hum:GetPlayingAnimationTracks()) do
-				if anim.Name:lower():find("crouch") or anim.Animation.AnimationId:find("crouch") then
-					isCrouching = true
-					break
-				end
+			local isCrouching = (hum.HipHeight < 1.5) or char:FindFirstChild("LowerTorso") and char.LowerTorso.Position.Y < char.HumanoidRootPart.Position.Y
+			if isCrouching then
+				hum.WalkSpeed = current.CrouchSpeed
+			else
+				hum.WalkSpeed = current.StandSpeed
 			end
-			hum.WalkSpeed = isCrouching and current.CrouchSpeed or current.StandSpeed
+		end
+	end
+
+	if current.FullBright then
+		Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+		Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+		Lighting.Brightness = 2
+		Lighting.ClockTime = 14
+	elseif not current.FullBright and not current.RemoveFog then
+		Lighting.Ambient = origLighting.Ambient
+		Lighting.OutdoorAmbient = origLighting.OutdoorAmbient
+		Lighting.Brightness = origLighting.Brightness
+		Lighting.ClockTime = origLighting.ClockTime
+	end
+
+	-- 3. ENGINE UTAMA HAPUS KABUT & DEBU ATMOSFER MAP
+	if current.RemoveFog then
+		Lighting.FogEnd = 999999 -- Membuang jarak pandang kabut ke tak terhingga
+		Lighting.FogStart = 999999
+		local atm = Lighting:FindFirstChildOfClass("Atmosphere")
+		if atm then
+			atm.Density = 0 -- Menghapus total partikel debu melayang agar jernih
+		end
+	else
+		if not current.FullBright then
+			Lighting.FogEnd = origLighting.FogEnd
+			Lighting.FogStart = origLighting.FogStart
+			local atm = Lighting:FindFirstChildOfClass("Atmosphere")
+			if atm then atm.Density = 0.3 end
 		end
 	end
 
 	for _, p in pairs(Players:GetPlayers()) do
 		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
 			local isBeast = p.Character:FindFirstChild("BeastHammer") or p.Character:FindFirstChild("Hammer") or (p:FindFirstChild("Attributes") and p.Attributes:GetAttribute("IsBeast"))
-			
 			if isBeast and current.BeastEsp then
 				applyESP(p.Character, Color3.fromRGB(255, 0, 0), true, p.Name)
 			elseif not isBeast and current.PlayerEsp then
@@ -522,22 +536,16 @@ local coreConn = RunService.Heartbeat:Connect(function()
 		end
 	else
 		for obj, esp in pairs(espObjects) do
-			if obj and obj.Name == "ComputerTable" then
-				removeESP(obj)
-			end
+			if obj and obj.Name == "ComputerTable" then removeESP(obj) end
 		end
 	end
 
 	if current.SilentHack then
 		for _, sound in pairs(SoundService:GetDescendants()) do
-			if sound:IsA("Sound") and (sound.Name:lower():find("error") or sound.Name:lower():find("fail") or sound.Name:lower():find("explode")) then
-				sound.Volume = 0
-			end
+			if sound:IsA("Sound") and (sound.Name:lower():find("error") or sound.Name:lower():find("fail") or sound.Name:lower():find("explode")) then sound.Volume = 0 end
 		end
 		for _, sound in pairs(workspace:GetDescendants()) do
-			if sound:IsA("Sound") and (sound.Name:lower():find("error") or sound.Name:lower():find("fail") or sound.Name:lower():find("explode")) then
-				sound.Volume = 0
-			end
+			if sound:IsA("Sound") and (sound.Name:lower():find("error") or sound.Name:lower():find("fail") or sound.Name:lower():find("explode")) then sound.Volume = 0 end
 		end
 	end
 end)
