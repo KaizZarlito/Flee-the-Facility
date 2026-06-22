@@ -1,4 +1,4 @@
--- [[ FLEE THE FACILITY ULTIMATE HUB v9.0 - PART 1 ]]
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.2 - PART 1 ]]
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -26,9 +26,10 @@ local current = {
 
 local connections = {}
 local espObjects = {}
+local toggleButtons = {} -- Tempat menyimpan data tombol agar sinkron saat di-reset
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "FTF_Premium_Menu_V9"
+ScreenGui.Name = "FTF_Premium_Menu_V9_2"
 ScreenGui.Parent = CoreGui or LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 
@@ -38,7 +39,7 @@ MainFrame.Position = UDim2.new(0.5, -270, 0.3, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
-MainFrame.Draggable = false -- Terkunci static tidak bisa digeser
+MainFrame.Draggable = false -- Dimatikan agar bentrok drag bawaan roblox tidak error
 MainFrame.Parent = ScreenGui
 
 local TopBar = Instance.new("Frame")
@@ -46,10 +47,33 @@ TopBar.Size = UDim2.new(1, 0, 0, 30)
 TopBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 TopBar.Parent = MainFrame
 
+-- SISTEM DRAG / GESER MENU (LOGIKA KUSTOM TERBARU)
+local dragging, dragStart, startPos
+TopBar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = MainFrame.Position
+	end
+end)
+local dragConn1 = UserInputService.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		local delta = input.Position - dragStart
+		MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+end)
+local dragConn2 = UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+	end
+end)
+table.insert(connections, dragConn1)
+table.insert(connections, dragConn2)
+
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(0.6, 0, 1, 0)
 Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Text = "FTF HUB - PREMIUM v9.0"
+Title.Text = "FTF HUB - PREMIUM v9.2 (DRAG & NAME ESP)"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
@@ -79,7 +103,7 @@ MiniBtn.Parent = TopBar
 
 local OpenBtn = Instance.new("TextButton")
 OpenBtn.Size = UDim2.new(0, 100, 0, 35)
-OpenBtn.Position = UDim2.new(0, 15, 0, 15) -- Pojok kiri atas
+OpenBtn.Position = UDim2.new(0, 15, 0, 15) -- Kunci Kiri Atas
 OpenBtn.BackgroundColor3 = Color3.fromRGB(40, 180, 100)
 OpenBtn.Text = "OPEN MENU"
 OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -87,7 +111,7 @@ OpenBtn.Font = Enum.Font.SourceSansBold
 OpenBtn.TextSize = 12
 OpenBtn.Visible = false
 OpenBtn.Active = true
-OpenBtn.Draggable = false -- Terkunci static
+OpenBtn.Draggable = false
 OpenBtn.Parent = ScreenGui
 
 local ConfirmFrame = Instance.new("Frame")
@@ -146,7 +170,7 @@ Content.Position = UDim2.new(0, 10, 0, 40)
 Content.BackgroundTransparency = 1
 Content.Parent = MainFrame
 
--- [[ FLEE THE FACILITY ULTIMATE HUB v9.0 - PART 2 ]]
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.2 - PART 2 ]]
 local function createSlider(name, min, max, default, pos, callback)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(0, 210, 0, 15)
@@ -215,18 +239,32 @@ end
 local standSlider = createSlider("Speed Berdiri", 16, 45, current.StandSpeed, UDim2.new(0, 0, 0, 5), function(v) current.StandSpeed = v end)
 local crouchSlider = createSlider("Speed Jongkok", 8, 30, current.CrouchSpeed, UDim2.new(0, 0, 0, 45), function(v) current.CrouchSpeed = v end)
 
+-- TOMBOL RESET KESELURUHAN (TOTAL)
 local ResetBtn = Instance.new("TextButton")
-ResetBtn.Size = UDim2.new(0, 210, 0, 35)
+ResetBtn.Size = UDim2.new(0, 100, 0, 35)
 ResetBtn.Position = UDim2.new(0, 0, 0, 95)
 ResetBtn.BackgroundColor3 = Color3.fromRGB(210, 130, 20)
-ResetBtn.Text = "Reset Setelan ke Normal"
+ResetBtn.Text = "Reset Semua"
 ResetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ResetBtn.Font = Enum.Font.SourceSansBold
 ResetBtn.TextSize = 13
 ResetBtn.Parent = Content
 round(ResetBtn)
 
-local function createToggle(name, default, pos, callback)
+-- TOMBOL RESET KHUSUS KECEPATAN SAJA
+local ResetSpeedBtn = Instance.new("TextButton")
+ResetSpeedBtn.Size = UDim2.new(0, 105, 0, 35)
+ResetSpeedBtn.Position = UDim2.new(0, 105, 0, 95)
+ResetSpeedBtn.BackgroundColor3 = Color3.fromRGB(150, 40, 40) -- Warna Merah Marun
+ResetSpeedBtn.Text = "Reset Speed Saja"
+ResetSpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ResetSpeedBtn.Font = Enum.Font.SourceSansBold
+ResetSpeedBtn.TextSize = 13
+ResetSpeedBtn.Parent = Content
+round(ResetSpeedBtn)
+
+-- FUNGSI MEMBUAT BUTTON CEKLIS (TOGGLE DENGAN SINKRONISASI RESET)
+local function createToggle(keyName, name, default, pos, callback)
 	local state = default
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(0, 20, 0, 20)
@@ -250,19 +288,26 @@ local function createToggle(name, default, pos, callback)
 	lbl.TextSize = 14
 	lbl.Parent = Content
 
-	btn.MouseButton1Click:Connect(function()
-		state = not state
+	local function updateVisual(newState)
+		state = newState
 		btn.BackgroundColor3 = state and Color3.fromRGB(0, 180, 80) or Color3.fromRGB(80, 80, 80)
 		btn.Text = state and "✓" or ""
 		callback(state)
+	end
+
+	btn.MouseButton1Click:Connect(function()
+		updateVisual(not state)
 	end)
+
+	-- Simpan referensi fungsi pembaru visual ke tabel global
+	toggleButtons[keyName] = updateVisual
 	return btn
 end
 
-createToggle("Silent Hack", current.SilentHack, UDim2.new(0, 240, 0, 5), function(v) current.SilentHack = v end)
-createToggle("Player ESP", current.PlayerEsp, UDim2.new(0, 240, 0, 35), function(v) current.PlayerEsp = v end)
-createToggle("Beast ESP", current.BeastEsp, UDim2.new(0, 240, 0, 65), function(v) current.BeastEsp = v end)
-createToggle("Computer ESP", current.ComputerEsp, UDim2.new(0, 240, 0, 95), function(v) current.ComputerEsp = v end)
+createToggle("SilentHack", "Silent Hack", current.SilentHack, UDim2.new(0, 240, 0, 5), function(v) current.SilentHack = v end)
+createToggle("PlayerEsp", "Player ESP", current.PlayerEsp, UDim2.new(0, 240, 0, 35), function(v) current.PlayerEsp = v end)
+createToggle("BeastEsp", "Beast ESP", current.BeastEsp, UDim2.new(0, 240, 0, 65), function(v) current.BeastEsp = v end)
+createToggle("ComputerEsp", "Computer ESP", current.ComputerEsp, UDim2.new(0, 240, 0, 95), function(v) current.ComputerEsp = v end)
 
 local TeleportTitle = Instance.new("TextLabel")
 TeleportTitle.Size = UDim2.new(0, 210, 0, 20)
@@ -300,7 +345,7 @@ but.Font = Enum.Font.SourceSansBold
 but.TextSize = 14
 round(but)
 
--- [[ FLEE THE FACILITY ULTIMATE HUB v9.0 - PART 3 ]]
+-- [[ FLEE THE FACILITY ULTIMATE HUB v9.2 - PART 3 ]]
 but.MouseButton1Click:Connect(function()
 	local inputText = inp.Text:lower()
 	if inputText == "" then return end
@@ -349,6 +394,17 @@ SubmitBtn.MouseButton1Click:Connect(function()
 	ScreenGui:Destroy()
 end)
 
+-- AKSI RESET SPEED SAJA
+ResetSpeedBtn.MouseButton1Click:Connect(function()
+	current.StandSpeed = defaults.StandSpeed
+	current.CrouchSpeed = defaults.CrouchSpeed
+	standSlider.Fill.Size = UDim2.new((defaults.StandSpeed - standSlider.Min) / (standSlider.Max - standSlider.Min), 0, 1, 0)
+	standSlider.Label.Text = "Speed Berdiri: " .. defaults.StandSpeed
+	crouchSlider.Fill.Size = UDim2.new((defaults.CrouchSpeed - crouchSlider.Min) / (crouchSlider.Max - crouchSlider.Min), 0, 1, 0)
+	crouchSlider.Label.Text = "Speed Jongkok: " .. defaults.CrouchSpeed
+end)
+
+-- AKSI RESET TOTAL (CEKLIS IKUT HILANG OTOMATIS)
 ResetBtn.MouseButton1Click:Connect(function()
 	for k, v in pairs(defaults) do current[k] = v end
 	standSlider.Fill.Size = UDim2.new((defaults.StandSpeed - standSlider.Min) / (standSlider.Max - standSlider.Min), 0, 1, 0)
@@ -356,10 +412,39 @@ ResetBtn.MouseButton1Click:Connect(function()
 	crouchSlider.Fill.Size = UDim2.new((defaults.CrouchSpeed - crouchSlider.Min) / (crouchSlider.Max - crouchSlider.Min), 0, 1, 0)
 	crouchSlider.Label.Text = "Speed Jongkok: " .. defaults.CrouchSpeed
 	inp.Text = ""
+	
+	-- Memaksa visual tombol toggle langsung mati/kembali ke default
+	if toggleButtons["SilentHack"] then toggleButtons["SilentHack"](false) end
+	if toggleButtons["PlayerEsp"] then toggleButtons["PlayerEsp"](false) end
+	if toggleButtons["BeastEsp"] then toggleButtons["BeastEsp"](false) end
+	if toggleButtons["ComputerEsp"] then toggleButtons["ComputerEsp"](false) end
 end)
 
-local function applyESP(object, color)
-	if espObjects[object] then return end
+-- LOGIKA ESP DENGAN NAMA PLAYER ASLI MELAYANG
+local function applyESP(object, color, isPlayer, pName)
+	if espObjects[object] then 
+		-- Jika nama tag hilang tapi highlight ada, pasang ulang
+		if isPlayer and object:FindFirstChild("Head") and not object.Head:FindFirstChild("FTF_NameTag") then
+			local bb = Instance.new("BillboardGui")
+			bb.Name = "FTF_NameTag"
+			bb.Size = UDim2.new(0, 100, 0, 30)
+			bb.AlwaysOnTop = true
+			bb.StudsOffset = Vector3.new(0, 3, 0)
+			
+			local tl = Instance.new("TextLabel", bb)
+			tl.Size = UDim2.new(1, 0, 1, 0)
+			tl.BackgroundTransparency = 1
+			tl.Text = pName or object.Name
+			tl.TextColor3 = color
+			tl.Font = Enum.Font.SourceSansBold
+			tl.TextSize = 14
+			tl.TextStrokeTransparency = 0
+			
+			bb.Parent = object.Head
+		end
+		return 
+	end
+	
 	local box = Instance.new("Highlight")
 	box.Name = "FTF_ESP"
 	box.FillColor = color
@@ -368,6 +453,35 @@ local function applyESP(object, color)
 	box.Adornee = object
 	box.Parent = CoreGui
 	espObjects[object] = box
+
+	if isPlayer and object:FindFirstChild("Head") then
+		local bb = Instance.new("BillboardGui")
+		bb.Name = "FTF_NameTag"
+		bb.Size = UDim2.new(0, 100, 0, 30)
+		bb.AlwaysOnTop = true
+		bb.StudsOffset = Vector3.new(0, 3, 0)
+		
+		local tl = Instance.new("TextLabel", bb)
+		tl.Size = UDim2.new(1, 0, 1, 0)
+		tl.BackgroundTransparency = 1
+		tl.Text = pName or object.Name
+		tl.TextColor3 = color
+		tl.Font = Enum.Font.SourceSansBold
+		tl.TextSize = 14
+		tl.TextStrokeTransparency = 0
+		
+		bb.Parent = object.Head
+	end
+end
+
+local function removeESP(object)
+	if espObjects[object] then
+		espObjects[object]:Destroy()
+		espObjects[object] = nil
+	end
+	if object and object:FindFirstChild("Head") and object.Head:FindFirstChild("FTF_NameTag") then
+		object.Head.FTF_NameTag:Destroy()
+	end
 end
 
 local coreConn = RunService.Heartbeat:Connect(function()
@@ -388,16 +502,14 @@ local coreConn = RunService.Heartbeat:Connect(function()
 
 	for _, p in pairs(Players:GetPlayers()) do
 		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-			local isBeast = p.Character:FindFirstChild("BeastHammer") or p.Character:FindFirstChild("Hammer") or p:FindFirstChild("Attributes") and p.Attributes:GetAttribute("IsBeast")
+			local isBeast = p.Character:FindFirstChild("BeastHammer") or p.Character:FindFirstChild("Hammer") or (p:FindFirstChild("Attributes") and p.Attributes:GetAttribute("IsBeast"))
+			
 			if isBeast and current.BeastEsp then
-				applyESP(p.Character, Color3.fromRGB(255, 0, 0))
+				applyESP(p.Character, Color3.fromRGB(255, 0, 0), true, p.Name)
 			elseif not isBeast and current.PlayerEsp then
-				applyESP(p.Character, Color3.fromRGB(0, 255, 0))
+				applyESP(p.Character, Color3.fromRGB(0, 255, 0), true, p.Name)
 			else
-				if espObjects[p.Character] then
-					espObjects[p.Character]:Destroy()
-					espObjects[p.Character] = nil
-				end
+				removeESP(p.Character)
 			end
 		end
 	end
@@ -405,14 +517,13 @@ local coreConn = RunService.Heartbeat:Connect(function()
 	if current.ComputerEsp then
 		for _, v in pairs(workspace:GetDescendants()) do
 			if v.Name == "ComputerTable" or v:FindFirstChild("ComputerTrigger") then
-				applyESP(v, Color3.fromRGB(0, 150, 255))
+				applyESP(v, Color3.fromRGB(0, 150, 255), false, nil)
 			end
 		end
 	else
 		for obj, esp in pairs(espObjects) do
 			if obj and obj.Name == "ComputerTable" then
-				esp:Destroy()
-				espObjects[obj] = nil
+				removeESP(obj)
 			end
 		end
 	end
@@ -433,8 +544,5 @@ end)
 table.insert(connections, coreConn)
 
 table.insert(connections, Players.PlayerRemoving:Connect(function(p)
-	if p.Character and espObjects[p.Character] then
-		espObjects[p.Character]:Destroy()
-		espObjects[p.Character] = nil
-	end
+	if p.Character then removeESP(p.Character) end
 end))
